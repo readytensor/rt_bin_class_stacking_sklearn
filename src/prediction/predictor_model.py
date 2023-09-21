@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from xgboost import XGBClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import accuracy_score
 import joblib
@@ -48,7 +48,13 @@ class Classifier:
             ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
             ('svc', SVC(kernel='rbf', C=1, degree=2, probability=True)),
             ('logistic', LogisticRegression()),
-            ('xgb', XGBClassifier(random_state=42)),
+            ('xgb', MLPClassifier(
+                hidden_layer_sizes=(100,),
+                activation="relu",
+                solver="adam",
+                learning_rate="adaptive",
+                max_iter=500
+            )),
             ('knn', KNeighborsClassifier(n_neighbors=5))
         ]
         model = StackingClassifier(
