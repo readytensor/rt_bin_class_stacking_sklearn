@@ -48,7 +48,7 @@ class Classifier:
             ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
             ('svc', SVC(kernel='rbf', C=1, degree=2, probability=True)),
             ('logistic', LogisticRegression()),
-            ('xgb', MLPClassifier(
+            ('mlp', MLPClassifier(
                 hidden_layer_sizes=(100,),
                 activation="relu",
                 solver="adam",
@@ -88,7 +88,7 @@ class Classifier:
         Returns:
             np.ndarray: Predicted classification labels.
         """
-        return self.model.predict(inputs)
+        return self.model.predict(inputs.values)
 
     def predict_proba(self, inputs: pd.DataFrame) -> np.ndarray:
         """Predict class probabilities for the given data.
@@ -98,7 +98,7 @@ class Classifier:
         Returns:
             numpy.ndarray: The predicted class probabilities.
         """
-        return self.model.predict_proba(inputs)
+        return self.model.predict_proba(inputs.values)
 
     def evaluate(self, test_inputs: pd.DataFrame, test_targets: pd.Series) -> float:
         """Evaluate the classifier and return the accuracy score.
@@ -115,7 +115,7 @@ class Classifier:
         """
         if not self._is_trained:
             raise NotFittedError("Model is not fitted yet.")
-        predictions = self.predict(test_inputs.values)
+        predictions = self.predict(test_inputs)
         return accuracy_score(test_targets, predictions)
 
     def save(self, model_dir_path: str) -> None:
