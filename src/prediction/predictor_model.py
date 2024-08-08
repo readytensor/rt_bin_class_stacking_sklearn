@@ -10,6 +10,7 @@ import joblib
 import os
 import pandas as pd
 import numpy as np
+from sklearn.metrics import f1_score
 
 
 PREDICTOR_FILE_NAME = "classifier_model.pkl"
@@ -27,7 +28,7 @@ class Classifier:
 
     model_name = "Stacking Classifier"
 
-    def __init__(self, passthrough=False):
+    def __init__(self, passthrough=False, prob_threshold=0.5, **kwargs):
         """Construct a new Stacking Classifier.
 
         Args:
@@ -35,6 +36,7 @@ class Classifier:
                                 estimator.
         """
         self.passthrough = passthrough
+        self.prob_threshold = float(prob_threshold)
         self.model = self.build_model()
         self._is_trained = False
 
@@ -45,17 +47,20 @@ class Classifier:
             StackingClassifier: Initialized stacking classifier.
         """
         base_learners = [
-            ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
-            ('svc', SVC(kernel='rbf', C=1, degree=2, probability=True)),
-            ('logistic', LogisticRegression()),
-            ('mlp', MLPClassifier(
-                hidden_layer_sizes=(100,),
-                activation="relu",
-                solver="adam",
-                learning_rate="adaptive",
-                max_iter=500
-            )),
-            ('knn', KNeighborsClassifier(n_neighbors=5))
+            ("rf", RandomForestClassifier(n_estimators=100, random_state=42)),
+            ("svc", SVC(kernel="rbf", C=1, degree=2, probability=True)),
+            ("logistic", LogisticRegression()),
+            (
+                "mlp",
+                MLPClassifier(
+                    hidden_layer_sizes=(100,),
+                    activation="relu",
+                    solver="adam",
+                    learning_rate="adaptive",
+                    max_iter=500,
+                ),
+            ),
+            ("knn", KNeighborsClassifier(n_neighbors=5)),
         ]
         model = StackingClassifier(
             estimators=base_learners,
@@ -101,22 +106,21 @@ class Classifier:
         return self.model.predict_proba(inputs.values)
 
     def evaluate(self, test_inputs: pd.DataFrame, test_targets: pd.Series) -> float:
-        """Evaluate the classifier and return the accuracy score.
+        """Evaluate the classifier and return the accuracy.
 
         Args:
-            test_inputs (pd.DataFrame): Test input data.
-            test_targets (pd.Series): Test target data.
-
+            test_inputs (pandas.DataFrame): The features of the test data.
+            test_targets (pandas.Series): The labels of the test data.
         Returns:
-            float: Accuracy score of the classifier.
-
-        Raises:
-            NotFittedError: If the model is not trained yet.
+            float: The accuracy of the classifier.
         """
-        if not self._is_trained:
-            raise NotFittedError("Model is not fitted yet.")
-        predictions = self.predict(test_inputs)
-        return accuracy_score(test_targets, predictions)
+        if self.model is not None:
+            prob = self.predict_proba(test_inputs)
+            labels = prob[:, 1] > self.prob_threshold
+
+            return f1_score(test_targets, labels)
+
+        raise NotFittedError("Model is not fitted yet.")
 
     def save(self, model_dir_path: str) -> None:
         """Save the classifier to disk.
@@ -150,10 +154,7 @@ class Classifier:
         Returns:
             str: Information about the classifier.
         """
-        return (
-            f"Model name: {self.model_name} ("
-            f"passthrough: {self.passthrough})"
-        )
+        return f"Model name: {self.model_name} (" f"passthrough: {self.passthrough})"
 
 
 def train_predictor_model(

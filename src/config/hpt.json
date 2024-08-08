@@ -2,10 +2,13 @@
   "num_trials": 20,
   "hyperparameters": [
     {
-      "name": "passthrough",
-      "short_desc": "determines whether the original training data should be passed to the final_estimator ",
-      "type": "categorical",
-      "categories": [true, false]
+      "name": "prob_threshold",
+      "short_desc": "...",
+      "type": "real",
+      "search_type": "uniform",
+      "range_low": 1e-4,
+      "range_high": 0.5
     }
+
   ]
 }

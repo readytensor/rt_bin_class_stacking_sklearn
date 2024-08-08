@@ -1,3 +1,4 @@
 {
-  "passthrough": false
+  "passthrough": false,
+  "prob_threshold": 0.25
 }
